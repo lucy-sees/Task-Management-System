@@ -36,6 +36,39 @@ const registerUser = async (req, res) => {
   }
 };
 
+const loginUser = async (req, res) => {
+  const { email, password } = req.body;
+
+  try {
+    // Check if the email or password is missing
+    if (!email || !password) {
+      return res.status(400).json({ message: 'Please fill in all fields' });
+    }
+
+    // Check if the user exists
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(400).json({ message: 'User not found' });
+    }
+
+    // Check if the password is correct
+    const isPasswordCorrect = await bcrypt.compare(password, user.password);
+    if (!isPasswordCorrect) {
+      return res.status(400).json({ message: 'Invalid credentials' });
+    }
+
+    // generate a JWT token
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+      expiresIn: '1h',
+    });
+
+
+    res.status(200).json({ message: 'Login successful' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+}
+
 const getAllUsers = async (req, res) => {
   try {
     const users = await User.find();
@@ -96,4 +129,5 @@ module.exports = {
   updateUser,
   deleteUser,
   registerUser,
+  loginUser,
 };
