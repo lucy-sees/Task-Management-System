@@ -1,8 +1,10 @@
 module.exports [
   {
-      rules: {
-          "no-unused-vars": "error",
-          "no-undef": "error"
-      }
+    rules: {
+      'import/no-unresolved': 'off',
+      'no-shadow': 'off',
+      'no-unused-vars': 'error',
+      'no-undef': 'error',
+    }
   }
 ];
