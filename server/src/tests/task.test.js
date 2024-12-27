@@ -12,35 +12,37 @@ app.use('/api/tasks', taskRoutes);
 jest.setTimeout(60000); // Set timeout to 60 seconds for the entire test suite
 
 beforeAll(async () => {
-    const url = process.env.MONGODB_URI;
-    if (!url) {
-      throw new Error('MONGODB_URI is not defined');
-    }
-    await mongoose.connect(url, { useNewUrlParser: true, useUnifiedTopology: true, useFindAndModify: false });
+  const url = process.env.MONGODB_URI;
+  if (!url) {
+    throw new Error('MONGODB_URI is not defined');
+  }
+  await mongoose.connect(url, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+    useFindAndModify: false,
+  });
 }, 60000);
 
 afterAll(async () => {
-    if (mongoose.connection.db) {
-      try {
-        await mongoose.connection.db.dropDatabase();
-      } catch (error) {
-        console.error('Error dropping database:', error.message);
-      }
+  if (mongoose.connection.db) {
+    try {
+      await mongoose.connection.db.dropDatabase();
+    } catch (error) {
+      console.error('Error dropping database:', error.message);
     }
-    await mongoose.connection.close();
+  }
+  await mongoose.connection.close();
 });
 
 describe('Task API', () => {
   it('should create a new task', async () => {
-    const res = await request(app)
-      .post('/api/tasks')
-      .send({
-        title: 'Test Task',
-        description: 'This is a test task',
-        status: 'pending',
-        dueDate: '2024-12-31T23:59:59.000Z',
-        userId: new mongoose.Types.ObjectId()
-      });
+    const res = await request(app).post('/api/tasks').send({
+      title: 'Test Task',
+      description: 'This is a test task',
+      status: 'pending',
+      dueDate: '2024-12-31T23:59:59.000Z',
+      userId: new mongoose.Types.ObjectId(),
+    });
     expect(res.statusCode).toEqual(201);
     expect(res.body).toHaveProperty('_id');
   });
@@ -57,7 +59,7 @@ describe('Task API', () => {
       description: 'This is a test task',
       status: 'pending',
       dueDate: '2024-12-31T23:59:59.000Z',
-      userId: new mongoose.Types.ObjectId()
+      userId: new mongoose.Types.ObjectId(),
     });
     await task.save();
 
@@ -72,17 +74,15 @@ describe('Task API', () => {
       description: 'This is a test task',
       status: 'pending',
       dueDate: '2024-12-31T23:59:59.000Z',
-      userId: new mongoose.Types.ObjectId()
+      userId: new mongoose.Types.ObjectId(),
     });
     await task.save();
 
-    const res = await request(app)
-      .put(`/api/tasks/${task._id}`)
-      .send({
-        title: 'Updated Test Task',
-        description: 'This is an updated test task',
-        status: 'completed'
-      });
+    const res = await request(app).put(`/api/tasks/${task._id}`).send({
+      title: 'Updated Test Task',
+      description: 'This is an updated test task',
+      status: 'completed',
+    });
     expect(res.statusCode).toEqual(200);
     expect(res.body).toHaveProperty('title', 'Updated Test Task');
   });
@@ -93,7 +93,7 @@ describe('Task API', () => {
       description: 'This is a test task',
       status: 'pending',
       dueDate: '2024-12-31T23:59:59.000Z',
-      userId: new mongoose.Types.ObjectId()
+      userId: new mongoose.Types.ObjectId(),
     });
     await task.save();
 

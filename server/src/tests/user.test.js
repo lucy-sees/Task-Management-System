@@ -16,7 +16,11 @@ beforeAll(async () => {
   if (!url) {
     throw new Error('MONGODB_URI is not defined');
   }
-  await mongoose.connect(url, { useNewUrlParser: true, useUnifiedTopology: true, useFindAndModify: false });
+  await mongoose.connect(url, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+    useFindAndModify: false,
+  });
 }, 60000);
 
 afterAll(async () => {
@@ -32,13 +36,11 @@ afterAll(async () => {
 
 describe('User API', () => {
   it('should create a new user', async () => {
-    const res = await request(app)
-      .post('/api/users')
-      .send({
-        username: 'Janet Dolie',
-        email: 'janet.dolie@example.com',
-        password: 'password123'
-      });
+    const res = await request(app).post('/api/users').send({
+      username: 'Janet Dolie',
+      email: 'janet.dolie@example.com',
+      password: 'password123',
+    });
     expect(res.statusCode).toEqual(201);
     expect(res.body).toHaveProperty('_id');
   });
@@ -53,7 +55,7 @@ describe('User API', () => {
     const user = new User({
       username: 'Janet Dolie',
       email: 'janet.dolie@example.com',
-      password: 'password123'
+      password: 'password123',
     });
     await user.save();
 
@@ -66,16 +68,14 @@ describe('User API', () => {
     const user = new User({
       username: 'Janet Dolie',
       email: 'janet.dolie@example.com',
-      password: 'password1234'
+      password: 'password1234',
     });
     await user.save();
 
-    const res = await request(app)
-      .put(`/api/users/${user._id}`)
-      .send({
-        username: 'Janety Dolie',
-        email: 'janet.dolie@example.com'
-      });
+    const res = await request(app).put(`/api/users/${user._id}`).send({
+      username: 'Janety Dolie',
+      email: 'janet.dolie@example.com',
+    });
     expect(res.statusCode).toEqual(200);
     expect(res.body).toHaveProperty('name', 'Jane Doe');
   });
@@ -84,7 +84,7 @@ describe('User API', () => {
     const user = new User({
       username: 'Janety Dolie',
       email: 'janet.dolie@example.com',
-      password: 'password1234'
+      password: 'password1234',
     });
     await user.save();
 
