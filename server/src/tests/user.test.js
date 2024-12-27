@@ -35,8 +35,8 @@ describe('User API', () => {
     const res = await request(app)
       .post('/api/users')
       .send({
-        name: 'John Doe',
-        email: 'john.doe@example.com',
+        username: 'Janet Dolie',
+        email: 'janet.dolie@example.com',
         password: 'password123'
       });
     expect(res.statusCode).toEqual(201);
@@ -51,8 +51,8 @@ describe('User API', () => {
 
   it('should fetch a user by ID', async () => {
     const user = new User({
-      name: 'John Doe',
-      email: 'john.doe@example.com',
+      username: 'Janet Dolie',
+      email: 'janet.dolie@example.com',
       password: 'password123'
     });
     await user.save();
@@ -64,17 +64,17 @@ describe('User API', () => {
 
   it('should update a user by ID', async () => {
     const user = new User({
-      name: 'John Doe',
-      email: 'john.doe@example.com',
-      password: 'password123'
+      username: 'Janet Dolie',
+      email: 'janet.dolie@example.com',
+      password: 'password1234'
     });
     await user.save();
 
     const res = await request(app)
       .put(`/api/users/${user._id}`)
       .send({
-        name: 'Jane Doe',
-        email: 'jane.doe@example.com'
+        username: 'Janety Dolie',
+        email: 'janet.dolie@example.com'
       });
     expect(res.statusCode).toEqual(200);
     expect(res.body).toHaveProperty('name', 'Jane Doe');
@@ -82,9 +82,9 @@ describe('User API', () => {
 
   it('should delete a user by ID', async () => {
     const user = new User({
-      name: 'John Doe',
-      email: 'john.doe@example.com',
-      password: 'password123'
+      username: 'Janety Dolie',
+      email: 'janet.dolie@example.com',
+      password: 'password1234'
     });
     await user.save();
 
