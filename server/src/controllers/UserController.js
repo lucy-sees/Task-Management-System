@@ -1,8 +1,21 @@
 // src/controllers/userController.js
 const User = require('../models/User');
 const bcrypt = require('bcrypt');
+const crypto = require('crypto');
+const jwt = require('jsonwebtoken');
+const nodemailer = require('nodemailer');
+
+// Nodemailer transporter for sending emails
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASSWORD,
+  },
+});
 
 const registerUser = async (req, res) => {
+
   const { username, email, password } = req.body;
 
   try {
@@ -30,7 +43,17 @@ const registerUser = async (req, res) => {
     // Save the user to the database
     await newUser.save();
 
-    res.status(201).json({ message: 'User registered successfully' });
+    // Send email confirmation
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: email,
+      subject: 'Email Confirmation',
+      html: `<p>Click <a href="http://localhost:5000/api/auth/confirm-email?token=${newUser.emailToken}">here</a> to confirm your email.</p>`,
+    };
+
+    await transporter.sendMail(mailOptions);
+    
+    res.status(201).json({ message: 'User registered successfully. Please check your email to confirm your account.' });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -51,6 +74,12 @@ const loginUser = async (req, res) => {
       return res.status(400).json({ message: 'User not found' });
     }
 
+    // Check if the email is confirmed
+    if (!user.isVerified) {
+      return res.status(400).json({ message: 'Please confirm your email to login.' });
+    }
+
+
     // Check if the password is correct
     const isPasswordCorrect = await bcrypt.compare(password, user.password);
     if (!isPasswordCorrect) {
@@ -68,6 +97,98 @@ const loginUser = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 }
+
+// Confirm Email
+const confirmEmail = async (req, res) => {
+  const { token } = req.query;
+
+  try {
+    // Find the user with the matching email token
+    const user = await User.findOne({ emailToken: token });
+    if (!user) {
+      return res.status(400).json({ message: 'Invalid token' });
+    }
+
+    // Mark the user as verified
+    user.isVerified = true;
+    user.emailToken = undefined;
+    await user.save();
+
+    res.status(200).json({ message: 'Email confirmed successfully' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Forgot Password
+const forgotPassword = async (req, res) => {
+  const { email } = req.body;
+
+  try {
+    // Check if the email is missing
+    if (!email) {
+      return res.status(400).json({ message: 'Please provide your email' });
+    }
+
+    // Check if the user exists
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(400).json({ message: 'User not found' });
+    }
+
+    // Generate a password reset token
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    user.resetToken = resetToken;
+    user.resetTokenExpiry = Date.now() + 3600000; // 1 hour
+    await user.save();
+
+    // Send password reset email
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: email,
+      subject: 'Password Reset',
+      html: `<p>Click <a href="http://localhost:5000/api/auth/reset-password?token=${resetToken}">here</a> to reset your password.</p>`,
+    };
+
+    await transporter.sendMail(mailOptions);
+
+    res.status(200).json({ message: 'Password reset email sent' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Reset Password
+const resetPassword = async (req, res) => {
+  const { token, newPassword } = req.body;
+
+  try {
+    // Check if the token or new password is missing
+    if (!token || !newPassword) {
+      return res.status(400).json({ message: 'Please provide a token and new password' });
+    }
+
+    // Find the user with the matching reset token
+    const user = await User.findOne({
+      resetToken: token,
+      resetTokenExpiry: { $gt: Date.now() }, // Check if the token is still valid
+    });
+    if (!user) {
+      return res.status(400).json({ message: 'Invalid or expired token' });
+    }
+
+    // Hash the new password
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    user.password = hashedPassword;
+    user.resetToken = undefined;
+    user.resetTokenExpiry = undefined;
+    await user.save();
+
+    res.status(200).json({ message: 'Password reset successfully' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
 
 const getAllUsers = async (req, res) => {
   try {
@@ -130,4 +251,7 @@ module.exports = {
   deleteUser,
   registerUser,
   loginUser,
+  confirmEmail,
+  forgotPassword,
+  resetPassword,
 };
